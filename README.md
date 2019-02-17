@@ -2,7 +2,7 @@
 
 
 ![CRAN](https://img.shields.io/cran/l/devtools.svg?style=for-the-badge) ![CRAN](https://img.shields.io/badge/Built%20With-Typescript-yellow.svg?style=for-the-badge) ![CRAN](https://img.shields.io/badge/Linted%20By-tslint-purple.svg?style=for-the-badge) 
-![Travis (.com) branch](https://img.shields.io/travis/com/tiehm/discord-decorators/master.svg?style=for-the-badge)
+![Travis (.com) branch](https://img.shields.io/travis/com/tiehm/discordjs-decorators/master.svg?style=for-the-badge)
 
 
 > This framework is made for users using typescript, **I do not support the use of plain Javascript**
