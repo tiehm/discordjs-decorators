@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+- "lts/*"
+cache: yarn
+script:
+- tsc --project ./scripts/tsconfig.json
+- yarn test

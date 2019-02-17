@@ -1,0 +1,14 @@
+# Created by .ignore support plugin (hsz.mobi)
+node_modules
+.idea
+tsconfig.json
+tslint.json
+src
+*.md
+.github
+coverage
+.travis.yml
+*.test.ts
+test
+examples
+scripts
