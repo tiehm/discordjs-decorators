@@ -158,7 +158,7 @@ export class SilentClient extends Client {
         if (this.defaultPrefixForce) return this.defaultPrefixForce;
         if (Array.isArray(this.prefix)) return this.prefix[0];
         if (!this.prefix && this.mentionPrefix) return `<@${this.user.id}>`;
-        return this.prefix;
+        return this.prefix as string;
     }
 
     /**
