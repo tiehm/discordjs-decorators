@@ -2,10 +2,11 @@
  * Copyright (c) 2019., Charlie Tiehm - admin@tiehm.me
  */
 
-import { Message, PermissionFlags, Role, Snowflake, TextChannel } from 'discord.js';
+import { Message, PermissionFlags, PermissionResolvable, Role, Snowflake, TextChannel } from 'discord.js';
 import { SilentClient } from '../../';
 import { ICommandOptions } from './typings/ICommandOptions';
 import { IOnlyOptions } from './typings/IOnlyOptions';
+import { IRateLimit } from './typings/IRateLimit';
 import { IVerify } from './typings/IVerify';
 import Timer = NodeJS.Timer;
 
@@ -20,21 +21,21 @@ export abstract class Command<S extends SilentClient = SilentClient> {
      * @property {String} commandName - The name of the command
      * @public
      */
-    public commandName: string;
+    public commandName!: string;
 
     /**
      * An array of aliases for the command.
      * @property {String[]} alias - An array of command aliases
      * @public
      */
-    public alias: string[];
+    public alias!: string[];
 
     /**
      * Restricting the command usage to specific regions like guild, dm, etc
      * @property {IOnlyOptions} only - Object of restricting attributes
      * @public
      */
-    public only: IOnlyOptions;
+    public only!: IOnlyOptions;
 
     /**
      * Ratelimit information
@@ -45,78 +46,76 @@ export abstract class Command<S extends SilentClient = SilentClient> {
      * @property {Boolean} ratelimit.all - Weather to include owners in the ratelimit
      * @public
      */
-    public ratelimit: {
-        times: number; timeout: number; all: boolean;
-    };
+    public ratelimit!: IRateLimit;
 
     /**
      * Additional verify function to inhibit command usage.
      * @property {?Function} extendedVerify - An extending verify function
      * @public
      */
-    public extendedVerify: (msg: Message, client: S) => IVerify | Promise<IVerify>;
+    public extendedVerify!: (msg: Message, client: S) => IVerify | Promise<IVerify>;
 
     /**
      * Restricting command to users who do not have set permissions.
      * @property {PermissionFlags[]} userPermissions - Holding required permissions for users to have
      * @public
      */
-    public userPermissions: PermissionFlags[];
+    public userPermissions!: PermissionFlags[];
 
     /**
      * Restricting command to specific roles or users
      * @property {{roles: Snowflake[], users: Snowflake[]}} restricted - information about how is able to use a cmd
      * @public
      */
-    public restricted: {roles: Snowflake[], users: Snowflake[]};
+    public restricted!: {roles: Snowflake[], users: Snowflake[]};
 
     /**
      * The description of the command
      * @property {string} desc - Description of command
      */
-    public desc: string;
+    public desc!: string;
 
     /**
      * Example usage of the command
      * @property {string} usage - Usage of command
      */
-    public usage: string;
+    public usage!: string;
 
     /**
      * Restricting the command to the owner
      * @property {boolean} ownerOnly
      */
-    public ownerOnly: boolean;
+    public ownerOnly!: boolean;
 
     /**
      * Restricting the command to NSFW channels
      * @property {boolean} nsfw
      */
-    public nsfw: boolean;
+    public nsfw!: boolean;
 
     /**
      * Setting a minimum role (in hierarchy) for command execution
      * @property {string|Snowflake} minRole
      */
-    public minRole: string|Snowflake;
+    public minRole!: string|Snowflake;
 
     /**
      * Hide the command from the default help message
      * @property {boolean} hidden
      */
-    public hidden: boolean;
+    public hidden!: boolean;
 
     /**
      * @property {String} _className
      * @private
      */
-    public _className: string;
+    public _className!: string;
 
     /**
      * @property {Object} client - The client instance
      * @public
      */
-    public client: S;
+    public client!: S;
     /**
      * @namespace ThrottleObject
      * @property {Number} ThrottleObject.start - Start of the throttling process
@@ -173,7 +172,7 @@ export abstract class Command<S extends SilentClient = SilentClient> {
      */
     public throttle (userID: Snowflake): {
         start: number; uses: number, timeout: Timer;
-    } {
+    }|null {
         if (!this.ratelimit.all && (this.client.owner.includes(userID) || !this.ratelimit)) return null;
 
         let throttleObj = this.throttled.get(userID);
@@ -205,7 +204,7 @@ export abstract class Command<S extends SilentClient = SilentClient> {
         if (!client && !this.client) throw new Error('Can not use verify without client.');
         if (client) this.client = client;
 
-        if (this.ownerOnly && msg.author.id !== client.owner) return { owner: true };
+        if (this.ownerOnly && msg.author.id !== client!.owner) return { owner: true };
 
         if (this.extendedVerify !== undefined) {
             let extendedResult: IVerify = this.extendedVerify(msg, this.client) as IVerify;
@@ -213,7 +212,7 @@ export abstract class Command<S extends SilentClient = SilentClient> {
                 extendedResult = await extendedResult;
             }
             if (typeof extendedResult === 'object' &&
-                Object.keys(extendedResult).map(value => extendedResult[value]).includes(true)) {
+                Object.values(extendedResult).includes(true)) {
                 return extendedResult;
             }
         }
@@ -225,7 +224,7 @@ export abstract class Command<S extends SilentClient = SilentClient> {
 
         if (this.ratelimit) {
             const throttle = this.throttle(msg.author.id);
-            throttle.uses++;
+            throttle!.uses++;
             if (throttle && throttle.uses > this.ratelimit.times) {
                 if (this.client.rateLimitExceededError) {
                     const timeout = (throttle.start + (this.ratelimit.timeout * 1000) - Date.now()) / 1000;
@@ -235,7 +234,10 @@ export abstract class Command<S extends SilentClient = SilentClient> {
             }
         }
 
-        if (msg.guild && this.userPermissions && !msg.member.hasPermissions(this.userPermissions as any)) {
+        if (msg.guild &&
+            this.userPermissions &&
+            !msg.member.hasPermissions(this.userPermissions as PermissionResolvable)
+        ) {
             return { permission: true };
         }
         if (msg.guild && !(msg.channel as TextChannel).nsfw && this.nsfw) return { nsfw: true };
@@ -263,6 +265,6 @@ export abstract class Command<S extends SilentClient = SilentClient> {
      * @abstract
      * @public
      */
-    public abstract async run(...values: any[]): Promise<IVerify>;
+    public abstract async run(...values: Array<unknown>): Promise<IVerify>;
 
 }

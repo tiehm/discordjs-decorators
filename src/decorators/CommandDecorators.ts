@@ -3,6 +3,7 @@
  */
 
 import { Message, PermissionFlags, Snowflake } from 'discord.js';
+import { SilentClient } from '..';
 import { IVerify } from '../structures/command/typings/IVerify';
 
 /**
@@ -26,6 +27,7 @@ export function Only(...types: string[]): ClassDecorator {
     const x = {};
 
     for (const type of types) {
+        // @ts-ignore
         x[type] = true;
     }
 
@@ -39,7 +41,7 @@ export function Only(...types: string[]): ClassDecorator {
  * @param func {Function} The custom verifier part you want to use
  * @returns {ClassDecorator}
  */
-export function Verify(func: (msg: Message, client?) => IVerify|Promise<IVerify>) {
+export function Verify(func: (msg: Message, client?: SilentClient) => IVerify|Promise<IVerify>) {
     return setMetaData('extendedVerify', func);
 }
 
@@ -143,7 +145,7 @@ export function Hidden(): ClassDecorator {
  * @private
  * @returns {ClassDecorator}
  */
-function setMetaData(key: string, value: any): ClassDecorator {
+function setMetaData(key: string, value: unknown): ClassDecorator {
     return function<T extends Function>(target: T): T {
         Object.defineProperty(target.prototype, key, {
             value,

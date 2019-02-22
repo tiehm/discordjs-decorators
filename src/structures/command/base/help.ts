@@ -3,7 +3,7 @@
  * Copyright (c) 2019., Charlie Tiehm - admin@tiehm.me
  */
 
-import { Message, RichEmbed, Role } from 'discord.js';
+import { Message, PermissionResolvable, RichEmbed, Role } from 'discord.js';
 import { Description, Name, Only, Usage } from '../../..';
 import { Command } from '../Command';
 import { IVerify } from '../typings/IVerify';
@@ -29,7 +29,7 @@ export class HelpCommand extends Command {
         ) {
             return false;
         }
-        return !(cmd.userPermissions && !msg.member.hasPermissions(this.userPermissions as any));
+        return !(cmd.userPermissions && !msg.member.hasPermissions(this.userPermissions as PermissionResolvable));
         // tslint:disable-next-line
     };
 
@@ -82,16 +82,16 @@ export class HelpCommand extends Command {
 
         } else if (args.length === 1) {
 
-            const command: Command = this.client.commands.get(args[0].toLowerCase());
+            const command: Command = this.client.commands.get(args[0].toLowerCase()) as Command;
             if (!command) {
                 await msg.reply('Could not find this command. Use the `help` command to see a list of commands.');
-                return null;
+                return {};
             }
             if (!(this.client.defaultHelpCommand as {showAll: boolean}).showAll &&
                 (command.hidden || !this.shouldShowCommand(command, msg))) {
                 await msg.reply(
                     'You do not have enough permissions to view this command or this command does not exist.');
-                return null;
+                return {};
             }
 
             // TODO: Make more detailed
@@ -106,7 +106,7 @@ export class HelpCommand extends Command {
 
         } else return { syntax: true };
 
-        return null;
+        return {};
     }
 
 }

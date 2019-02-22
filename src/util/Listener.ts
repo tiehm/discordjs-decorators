@@ -7,6 +7,7 @@ import { logger, Logger } from './Logger';
 export class Listener {
 
     @logger()
+    // @ts-ignore
     private readonly logger: Logger;
     /**
      * @property {SilentClient} client
@@ -47,9 +48,9 @@ export class Listener {
         // A falsie value or Promise resolving to such
         if (this.client.events.get('message')) {
             this.logger.debug('Executing custom message event');
-            let ranEvent: any|Promise<any> = this.client.events.get('message').run(msg);
+            let ranEvent: unknown|Promise<unknown> = this.client.events.get('message')!.run(msg);
             if (this.wait) {
-                if (ranEvent.constructor.name === 'Promise') {
+                if ((ranEvent as Object).constructor.name === 'Promise') {
                     ranEvent = await ranEvent;
                 }
                 if (!ranEvent) return false;
@@ -70,7 +71,11 @@ export class Listener {
         if (verify.constructor && verify.constructor.name === 'Promise') verify = await verify;
 
         if (verify) {
-            if (verify.channel) await msg.reply('This command can not be used in this channel.');
+
+            if (verify.channel) {
+                await msg.reply('This command can not be used in this channel.');
+            }
+            // tslint:disable
             else if (verify.dm) await msg.reply('This command can only be used within DMs.');
             else if (verify.guild) await msg.reply('This command can only be used within guilds.');
             else if (verify.nsfw) await msg.reply('This command can only be used in NSFW channels.');
@@ -83,8 +88,7 @@ export class Listener {
                 // tslint:disable-next-line
                 await msg.reply(`You used this command in the wrong way.\nSyntax: \`${this.client.defaultPrefix}${command.commandName} ${command.usage}\`.`);
             }
-            // This is basically the Object.values() of ES2017
-            if (Object.keys(verify).map(value => verify[value]).includes(true)) return false;
+            if (Object.values(verify).includes(true)) return false;
         }
 
         const args = msg.content.trim().split(/ +/g).slice(1);
@@ -117,7 +121,7 @@ export class Listener {
      */
     public _findCommandInMessage(msg: Message): Command {
 
-        let command: Command = null;
+        let command: Command;
 
         if (msg.isMemberMentioned(this.client.user) &&
             this.client.mentionPrefix && (
@@ -126,7 +130,7 @@ export class Listener {
             )
         ) {
             const foundMsgCmd = msg.content.split(/ +/g)[1];
-            if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd);
+            if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd) as Command;
             if (this.client.commands.find(c => c.alias && c.alias.includes(foundMsgCmd))) {
                 command = this.client.commands.find(c => c.alias.includes(foundMsgCmd));
             }
@@ -145,7 +149,7 @@ export class Listener {
             for (const prefix of this.client.prefix) {
                 if (!msg.content.startsWith(prefix)) continue;
                 const foundMsgCmd = msg.content.slice(prefix.length).trim().split(/ +/g)[0].toLowerCase();
-                if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd);
+                if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd) as Command;
                 if (this.client.commands.find(c => c.alias && c.alias.includes(foundMsgCmd))) {
                     command = this.client.commands.find(c => c.alias && c.alias.includes(foundMsgCmd));
                 }
@@ -153,6 +157,7 @@ export class Listener {
 
         }
 
+        // @ts-ignore
         return command;
 
     }

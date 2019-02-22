@@ -3,6 +3,7 @@
  */
 
 import { Message, PermissionFlags, Snowflake } from 'discord.js';
+import { SilentClient } from '../../..';
 import { IOnlyOptions } from './IOnlyOptions';
 import { IVerify } from './IVerify';
 
@@ -15,7 +16,7 @@ export interface ICommandOptions {
         timeout: number;
         all: boolean;
     };
-    extendedVerify?: (msg: Message, client) => IVerify|Promise<IVerify>;
+    extendedVerify?: (msg: Message, client: SilentClient) => IVerify|Promise<IVerify>;
     userPermissions: PermissionFlags[];
     restricted: {roles: Snowflake[], users: Snowflake[]};
     desc: string;

@@ -6,6 +6,7 @@
     ],
     "jsRules": {},
     "rules": {
+        "no-any": true,
         "import-spacing": true,
         "max-line-length": [true, 120],
         "ban-types": false,

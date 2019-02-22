@@ -53,7 +53,7 @@ export class Logger {
             const msg = this.format() + chalk.red(err);
             Logger.write(msg);
         } else {
-            const [name, ...stack] = err.stack.split('\n');
+            const [name, ...stack] = err.stack!.split('\n');
             const msg = `${this.format() + chalk.red(name)}\n${chalk.gray(stack.join('\n'))}`;
             Logger.write(msg);
         }
@@ -103,7 +103,7 @@ export class Logger {
 }
 
 export function logger(type?: string): PropertyDecorator {
-    return function (target: Object, propertyKey: string) {
+    return function (target: Object, propertyKey: string|symbol) {
         // tslint:disable-next-line
         if (!type) type = target.constructor.name;
         // tslint:disable-next-line

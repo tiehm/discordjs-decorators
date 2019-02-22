@@ -13,8 +13,8 @@
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "build": "rimraf dist/ && tsc && tsc --project ./scripts/tsconfig.json && yarn copy-typings ",
     "copy-typings": "node scripts/copyTypings.js",
-    "only-test": "jest",
-    "test": "yarn lint && jest",
+    "only-test": "jest --coverage",
+    "test": "yarn lint && yarn only-test",
     "test:discord": "node test/index.js"
   },
   "dependencies": {
@@ -62,7 +62,8 @@
       "<rootDir>/src/util/ArgumentMetadata.ts",
       "<rootDir>/src/util/ConfigError.ts",
       "<rootDir>/src/util/Logger.ts",
-      "<rootDir>/src/decorators/"
+      "<rootDir>/src/decorators/",
+      "<rootDir>/src/structures/command/base/"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"

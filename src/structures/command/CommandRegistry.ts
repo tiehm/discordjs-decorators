@@ -11,7 +11,7 @@ export class CommandRegistry extends Collection<string, Command> {
     protected client: SilentClient;
 
     @logger()
-    private readonly logger: Logger;
+    private readonly logger!: Logger;
 
     constructor(client: SilentClient) {
         super();

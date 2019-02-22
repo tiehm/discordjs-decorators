@@ -14,6 +14,6 @@ export class PingCommand extends Command {
 
     public async run(msg: Message) {
         await msg.reply('pong');
-        return null;
+        return {};
     }
 }

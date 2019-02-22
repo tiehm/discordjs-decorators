@@ -2,17 +2,15 @@
  * Copyright (c) 2019., Charlie Tiehm - admin@tiehm.me
  */
 
-import { Collection } from 'discord.js';
+import { ClientUser, Collection, Message } from 'discord.js';
+import 'jest';
+import { Command, SilentClient } from '..';
 import { argumentStore } from './ArgumentMetadata';
 import { Listener } from './Listener';
 
 describe('Listener', () => {
 
     let listener: Listener;
-
-    afterEach(() => {
-        listener = null;
-    });
 
     describe('handle message event', () => {
 
@@ -22,12 +20,12 @@ describe('Listener', () => {
 
                 listener = new Listener({
                     events: new Collection().set('message', {
-                        run: (msg) => {
-                            return !msg.test;
+                        run: (msg: Message) => {
+                            return msg.content !== 'x';
                         }
                     })
-                } as any);
-                expect(listener.handleMessageEvent({ test: true } as any)).resolves.toBe(false);
+                } as SilentClient);
+                expect(listener.handleMessageEvent({ content: 'x' } as Message)).resolves.toBe(false);
 
             });
 
@@ -35,245 +33,257 @@ describe('Listener', () => {
 
                 listener = new Listener({
                     events: new Collection().set('message', {
-                        run: (msg) => {
-                            return Promise.resolve(!msg.test);
+                        run: (msg: Message) => {
+                            return Promise.resolve(msg.content);
                         }
                     })
-                } as any);
-                expect(listener.handleMessageEvent({ test: true } as any)).resolves.toBe(false);
+                } as SilentClient);
+                expect(listener.handleMessageEvent({ content: '' } as Message)).resolves.toBe(false);
 
             });
 
         });
 
-        describe('command not found', () => {
+        describe('command not found', async () => {
 
             listener = new Listener({
                 commandNotFoundError: 'not found',
                 events: new Collection()
-            } as any);
+            } as SilentClient);
             listener._findCommandInMessage = jest.fn(() => false);
 
-            const msg = {
+            const msg: Partial<Message> = {
                 content: 'foobar',
                 reply: jest.fn()
-            } as any;
+            };
+            const handled = await listener.handleMessageEvent(msg as Message);
 
-            expect(listener.handleMessageEvent(msg)).resolves.toBe(false);
-            expect(msg.reply.mock.calls[0][0]).toBe('not found');
-            expect((listener._findCommandInMessage as any).mock.calls[0][0]).toMatchObject(msg);
+            expect(handled).toBe(false);
+            expect(msg.reply).toBeCalledWith('not found');
+            expect((listener._findCommandInMessage as jest.Mock).mock.calls[0][0]).toMatchObject(msg);
 
         });
 
         describe('verify command', () => {
 
-            test('failed verification [channel]', () => {
+            test('failed verification [channel]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 channel: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('This command can not be used in this channel.');
+                const handled = await listener.handleMessageEvent(msg as Message);
+
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('This command can not be used in this channel.');
 
             });
 
-            test('failed verification [dm]', () => {
+            test('failed verification [dm]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 dm: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('This command can only be used within DMs.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('This command can only be used within DMs.');
 
             });
 
-            test('failed verification [guild]', () => {
+            test('failed verification [guild]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 guild: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('This command can only be used within guilds.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('This command can only be used within guilds.');
 
             });
 
-            test('failed verification [nsfw]', () => {
+            test('failed verification [nsfw]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 nsfw: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('This command can only be used in NSFW channels.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('This command can only be used in NSFW channels.');
 
             });
 
-            test('failed verification [owner]', () => {
+            test('failed verification [owner]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 owner: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('This command can only be used by the Bot Owner.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('This command can only be used by the Bot Owner.');
 
             });
 
-            test('failed verification [permission]', () => {
+            test('failed verification [permission]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 permission: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('You do not have enough permissions to use this command.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('You do not have enough permissions to use this command.');
 
             });
 
-            test('failed verification [restricted]', () => {
+            test('failed verification [restricted]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 restricted: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('You can not use this command.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('You can not use this command.');
 
             });
 
-            test('failed verification [role]', () => {
+            test('failed verification [role]', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 role: true
-                            };
+                            });
                         }
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe('Your role is too low to use this command.');
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith('Your role is too low to use this command.');
 
             });
 
-            test('failed verification [syntax]', () => {
+            test('failed verification [syntax]', async () => {
 
                 listener = new Listener({
                     events: new Collection(),
                     defaultPrefix: '!'
-                } as any);
-                listener._findCommandInMessage = (): any => {
-                    return {
+                } as SilentClient);
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         verify () {
-                            return {
+                            return Promise.resolve({
                                 syntax: true
-                            };
+                            });
                         },
                         commandName: 'foobar',
                         usage: '[use it]'
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
-                const msg = {
+                const msg: Partial<Message> = {
                     reply: jest.fn()
                 };
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(false);
-                expect(msg.reply.mock.calls[0][0]).toBe(
+                const handled = await listener.handleMessageEvent(msg as Message);
+
+                expect(handled).toBe(false);
+                expect(msg.reply).toBeCalledWith(
                     'You used this command in the wrong way.\nSyntax: `!foobar [use it]`.');
 
             });
@@ -282,20 +292,20 @@ describe('Listener', () => {
 
         describe('running command', () => {
 
-            test('with argumentStore', () => {
+            test('with argumentStore', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
+                } as SilentClient);
                 const run = jest.fn();
-                listener._findCommandInMessage = (): any => {
-                    return {
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         run,
                         verify () {
-                            return {};
+                            return Promise.resolve({});
                         },
                         _className: 'foo'
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg = {
                     content: 'x'
@@ -303,42 +313,44 @@ describe('Listener', () => {
                 argumentStore.push({
                     name: 'foo',
                     index: 0,
-                    value: _ => 'X'
+                    value: () => 'X'
                 });
                 argumentStore.push({
                     name: 'foo',
                     index: 1,
-                    value: _ => 'Y'
+                    value: () => 'Y'
                 });
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(true);
+                expect(handled).toBe(true);
                 expect(run.mock.calls[0][0]).toBe('X');
                 expect(run.mock.calls[0][1]).toBe('Y');
 
             });
 
-            test('default handle', () => {
+            test('default handle', async () => {
 
                 listener = new Listener({
                     events: new Collection()
-                } as any);
+                } as SilentClient);
                 const run = jest.fn();
-                listener._findCommandInMessage = (): any => {
-                    return {
+                listener._findCommandInMessage = (): Command<SilentClient> => {
+                    return ({
                         run,
                         verify () {
-                            return {};
+                            return Promise.resolve({});
                         },
                         _className: 'foo'
-                    };
+                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg = {
                     content: '!test this command'
                 };
                 // @ts-ignore
                 argumentStore = [];
+                const handled = await listener.handleMessageEvent(msg as Message);
 
-                expect(listener.handleMessageEvent(msg as any)).resolves.toBe(true);
+                expect(handled).toBe(true);
                 expect(run.mock.calls[0][0]).toMatchObject(msg);
                 expect(run.mock.calls[0][1]).toMatchObject(['this', 'command']);
 
@@ -360,14 +372,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
-                expect(listener._findCommandInMessage({
+                expect(listener._findCommandInMessage(({
                     content: '!test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Partial<Message>) as Message)).toBe('COMMAND FOUND');
             });
 
             test('find the command by alias', () => {
@@ -378,14 +390,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', { alias: 'yeet' })
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '!yeet this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toMatchObject({ alias: 'yeet' });
+                } as Message)).toMatchObject({ alias: 'yeet' });
             });
 
             test('find the command with spaces around', () => {
@@ -396,14 +408,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '! test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
             });
 
             test('test a message without the prefix', () => {
@@ -414,14 +426,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: 'test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBeNull();
+                } as Message)).toBeUndefined();
             });
 
             test('test a message with the wrong prefix', () => {
@@ -432,14 +444,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '!!test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBeNull();
+                } as Message)).toBeNull();
             });
 
         });
@@ -453,14 +465,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '<@CLIENT> test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
             });
 
             test('find command with alias', () => {
@@ -470,14 +482,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', { alias: 'yeet' })
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '<@CLIENT> yeet this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toMatchObject({ alias: 'yeet' });
+                } as Message)).toMatchObject({ alias: 'yeet' });
             });
 
             test('do not find command', () => {
@@ -487,14 +499,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '<@CLIENT> tust this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBeNull();
+                } as Message)).toBeUndefined();
             });
 
             test('no prefix', () => {
@@ -504,14 +516,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: 'test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBeNull();
+                } as Message)).toBeUndefined();
             });
 
         });
@@ -526,28 +538,28 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '!test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
 
                 expect(listener._findCommandInMessage({
                     content: '!!test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
 
                 expect(listener._findCommandInMessage({
                     content: '-test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
             });
 
             test('find command with alias', () => {
@@ -559,14 +571,14 @@ describe('Listener', () => {
                         id: 'CLIENT'
                     },
                     commands: new Collection().set('test', 'COMMAND FOUND')
-                } as any);
+                } as SilentClient);
 
                 expect(listener._findCommandInMessage({
                     content: '!test this command',
-                    isMemberMentioned: (x) => {
-                        return x.id === 'CLIENT';
+                    isMemberMentioned: (client: ClientUser) => {
+                        return client.id === 'CLIENT';
                     }
-                } as any)).toBe('COMMAND FOUND');
+                } as Message)).toBe('COMMAND FOUND');
 
             });
 

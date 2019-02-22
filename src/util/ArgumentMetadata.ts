@@ -8,7 +8,7 @@ import { Message } from 'discord.js';
  * This stores all argument decorators
  */
 export const argumentStore: Array<{
-    value: (msg: Message) => any,
+    value: (msg: Message) => unknown,
     name: string,
     index: number
 }> = [];

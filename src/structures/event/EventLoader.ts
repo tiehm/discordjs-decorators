@@ -43,11 +43,14 @@ export class EventLoader {
 
         for (const file of files) {
             delete require.cache[require.resolve(file)];
-            const loadedFile = require(file) as any;
+            const loadedFile = require(file);
             const foundExport = Object.keys(loadedFile);
 
             if (foundExport.length === 1) {
-                const foundClass: new () => Event = loadedFile[foundExport[0]];
+
+                // @ts-ignore
+                const foundClass: new () => Event =
+                          (loadedFile as {[x: string]: unknown})[foundExport[0]] as Event<SilentClient>;
                 // TODO: Implement prototype checking, e.g. export can also be a class which is not an event
                 if (!foundClass) {
                     console.warn(`File ${file} is in the event directory but is not exporting an event`);

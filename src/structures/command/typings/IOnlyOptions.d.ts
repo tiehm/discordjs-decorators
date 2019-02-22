@@ -5,5 +5,5 @@
 export interface IOnlyOptions {
     dm: boolean;
     guild: boolean;
-    [id: string]: any;
+    [id: string]: boolean;
 }

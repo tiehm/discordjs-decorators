@@ -11,17 +11,17 @@ export abstract class Event<S extends SilentClient = SilentClient> {
      * @property {Object} client
      * @public
      */
-    public client: S;
+    public client!: S;
     /**
      * @property {String} eventName
      * @public
      */
-    public eventName: string;
+    public eventName!: string;
     /**
      * @property {Boolean} once
      * @public
      */
-    public once: boolean;
+    public once!: boolean;
 
     /**
      * Create a new Event
@@ -52,6 +52,6 @@ export abstract class Event<S extends SilentClient = SilentClient> {
      * Run/Execute an event
      * @param args {*[]}
      */
-    public abstract run(...args: any[]);
+    public abstract run(...args: Array<unknown>): unknown;
 
 }

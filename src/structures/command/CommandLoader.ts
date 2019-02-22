@@ -12,7 +12,7 @@ import { CommandRegistry } from './CommandRegistry';
 export class CommandLoader {
 
     @logger()
-    private readonly logger: Logger;
+    private readonly logger!: Logger;
     private readonly client: SilentClient;
     private commands: CommandRegistry;
 
@@ -21,7 +21,7 @@ export class CommandLoader {
         this.commands = client.commands;
     }
 
-    public loadFromPath(pathPattern: string, baseCommands: boolean = true): void {
+    public loadFromPath(pathPattern: string|null, baseCommands: boolean = true): void {
 
         this.logger.debug(`Starting to load commands from ${pathPattern}, including baseCommands: ${baseCommands}`);
         const resolvedPath: string = path.resolve(baseCommands ?
@@ -34,7 +34,7 @@ export class CommandLoader {
         for (const file of files) {
             this.logger.debug(`Loading ${file}`);
             delete require.cache[require.resolve(file)];
-            const loadedFile = require(file) as any;
+            const loadedFile = require(file);
             const foundExport = Object.keys(loadedFile);
 
             if (foundExport.length === 1) {

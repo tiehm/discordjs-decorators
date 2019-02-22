@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2016",
+    "target": "es2018",
     "experimentalDecorators": true,
     "declaration": true,
     "sourceMap": true,
     "outDir": "dist",
-    "removeComments": false
+    "removeComments": false,
+    "strict": true
   },
   "include": [
     "src/**/*"

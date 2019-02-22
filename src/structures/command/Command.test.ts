@@ -2,9 +2,13 @@
  * Copyright (c) 2019., Charlie Tiehm - admin@tiehm.me
  */
 
-import { Collection, Role, Snowflake } from 'discord.js';
+import {
+    Client, Collection, Guild, Message, PermissionFlags, Role, Snowflake, TextChannel, User } from 'discord.js';
+import { SilentClient } from '../..';
 import { Command } from './Command';
 import { ICommandOptions } from './typings/ICommandOptions';
+import { IOnlyOptions } from './typings/IOnlyOptions';
+import { IRateLimit } from './typings/IRateLimit';
 import { IVerify } from './typings/IVerify';
 import Timer = NodeJS.Timer;
 
@@ -25,29 +29,23 @@ expect.extend({
 
 describe('Command', () => {
 
-    let cmd: Command;
-    let base;
+    let cmd: Partial<Command>;
+    const base = class CMD extends Command {
 
-    afterEach(() => {
-        cmd = null;
-        base = null;
-    });
+        public commandName = 'foobar';
+
+        constructor(options?: ICommandOptions) {
+            super(options);
+        }
+
+        public async run (...values: Array<unknown>): Promise<IVerify> {
+            return {};
+        }
+
+    };
 
     beforeEach(() => {
-        base = class CMD extends Command {
-
-            public commandName = null;
-
-            constructor(options?) {
-                super(options);
-            }
-
-            public async run (...values): Promise<IVerify> {
-                return undefined;
-            }
-
-        };
-        cmd = new base() as Command;
+        cmd = new base();
     });
 
     test('Initialize with options', () => {
@@ -63,7 +61,7 @@ describe('Command', () => {
                 times: 1,
                 all: true
             },
-            extendedVerify: (msg, client) => ({ syntax: true }),
+            extendedVerify: () => ({ syntax: true }),
             userPermissions: ['VIEW_CHANNEL'],
             restricted: {
                 roles: [],
@@ -83,28 +81,33 @@ describe('Command', () => {
     });
 
     test('Error as no commandName is given', () => {
+        cmd = new base({} as ICommandOptions);
         expect(() => {
-            cmd._init({} as any);
+            cmd.commandName = undefined;
+            cmd._init!({} as SilentClient);
         }).toThrowError(TypeError);
     });
 
     test('commandName is given', () => {
         cmd.commandName = 'foobar';
-        expect(cmd._init({} as any)).toMatchObject(cmd);
+        expect(cmd._init!({} as SilentClient)).toMatchObject(cmd);
     });
 
     describe('Command Execution throttle', () => {
 
         test('No throttle', () => {
-            cmd.ratelimit = {} as any;
-            cmd.client = { owner: ['x'] } as any;
-            expect(cmd.throttle('x')).toBeNull();
+            cmd.ratelimit = {} as IRateLimit;
+            cmd.client = { owner: ['x'] } as SilentClient;
+            expect(cmd.throttle!('x')).toBeNull();
         });
 
         test('First use', () => {
-            cmd.client = { owner: 'y', setTimeout: (a, b) => 1 } as any;
+            // @ts-ignore
+            cmd.client = ({
+                owner: 'y', setTimeout: (fn: Function, timeout: number) => 1
+            } as Partial<SilentClient>) as SilentClient;
             cmd.ratelimit = { all: false, timeout: 10000, times: 4 };
-            expect(cmd.throttle('x')).toMatchObject({
+            expect(cmd.throttle!('x')).toMatchObject({
                 // @ts-ignore
                 start: expect.toBeLikeDate(Date.now()),
                 uses: 0,
@@ -113,9 +116,12 @@ describe('Command', () => {
         });
 
         test('Exclude the owner', () => {
-            cmd.client = { owner: 'y', setTimeout: (a, b) => 1 } as any;
+            // @ts-ignore
+            cmd.client = ({
+                owner: 'y', setTimeout: (fn: Function, timeout: number) => 1
+            } as Partial<SilentClient>) as SilentClient;
             cmd.ratelimit = { all: false, timeout: 10000, times: 4 };
-            expect(cmd.throttle('y')).toBeNull();
+            expect(cmd.throttle!('y')).toBeNull();
         });
 
     });
@@ -123,13 +129,15 @@ describe('Command', () => {
     describe('Command Verifier', () => {
 
         test('Do not run without providing a client', () => {
-            expect(cmd.verify({} as any)).rejects.toEqual(new Error('Can not use verify without client.'));
+            expect(cmd.verify!({} as Message)).rejects.toEqual(new Error('Can not use verify without client.'));
         });
 
         test('Disabled owner commands to users', () => {
             cmd.ownerOnly = true;
-            cmd.client = { owner: 'y' } as any;
-            expect(cmd.verify({ author: { id: 'x' } } as any, { owner: 'y' } as any)).resolves.toMatchObject({
+            cmd.client = { owner: 'y' } as SilentClient;
+            expect(
+                cmd.verify!({ author: { id: 'x' } } as Message, { owner: 'y' } as SilentClient)
+            ).resolves.toMatchObject({
                 owner: true
             });
         });
@@ -148,8 +156,8 @@ describe('Command', () => {
                         verify: false
                     };
                 };
-                expect(cmd.verify({ content: 'foobar', author: { id: 'x' } } as any,
-                    { client: {} } as any)).resolves.toMatchObject({
+                expect(cmd.verify!({ content: 'foobar', author: { id: 'x' } } as Message,
+                    ({ client: {} } as Partial<SilentClient>) as SilentClient)).resolves.toMatchObject({
                         verify: true
                     });
             });
@@ -166,14 +174,16 @@ describe('Command', () => {
                         verify: false
                     };
                 };
-                expect(cmd.verify({ content: 'foobar', author: { id: 'x' } } as any,
-                    { client: {} } as any)).resolves.toMatchObject({ verify: true });
+                expect(cmd.verify!({ content: 'foobar', author: { id: 'x' } } as Message,
+                    ({ client: {} } as Partial<SilentClient>) as SilentClient)).resolves.toMatchObject({
+                        verify: true
+                    });
             });
 
             test('extension without a restriction', () => {
                 cmd.ownerOnly = false;
-                cmd.client = { owner: 'y' } as any;
-                cmd.only = {} as any;
+                cmd.client = { owner: 'y' } as SilentClient;
+                cmd.only = {} as IOnlyOptions;
                 cmd.extendedVerify = (msg) => {
                     if (msg.content === 'foobar') {
                         return {};
@@ -182,24 +192,28 @@ describe('Command', () => {
                         verify: true
                     };
                 };
-                expect(cmd.verify({ content: 'foobar', author: { id: 'x' } } as any,
-                    { client: {} } as any)).resolves.toMatchObject({ channel: false });
+                expect(cmd.verify!({ content: 'foo', author: { id: 'x' } } as Message,
+                    ({ client: {} } as Partial<SilentClient>) as SilentClient)).resolves.toMatchObject({
+                        verify: true
+                    });
             });
 
             test('async extension without a restriction', () => {
                 cmd.ownerOnly = false;
-                cmd.client = { owner: 'y' } as any;
-                cmd.only = {} as any;
+                cmd.client = { owner: 'y' } as SilentClient;
+                cmd.only = {} as IOnlyOptions;
                 cmd.extendedVerify = (msg) => {
                     if (msg.content === 'foobar') {
-                        return Promise.resolve({});
+                        return Promise.resolve({ verify: true });
                     }
                     return {
                         verify: true
                     };
                 };
-                expect(cmd.verify({ content: 'foobar', author: { id: 'x' } } as any,
-                    { client: {} } as any)).resolves.toMatchObject({ channel: false });
+                expect(cmd.verify!({ content: 'foobar', author: { id: 'x' } } as Message,
+                    ({ client: {} } as Partial<SilentClient>) as SilentClient)).resolves.toMatchObject({
+                        verify: true
+                    });
             });
 
         });
@@ -208,11 +222,13 @@ describe('Command', () => {
 
             test('user restriction with user id', () => {
 
-                cmd.restricted = { users: ['x'], roles: [] } as any;
+                cmd.restricted = { users: ['x'], roles: [] } as {users: string[], roles: string[]};
                 cmd.ownerOnly = false;
-                cmd.client = {} as any;
-                expect(cmd.verify(
-                    { member: { roles: new Collection<Snowflake, Role>() }, guild: true, author: { id: 'y' } } as any
+                cmd.client = {} as SilentClient;
+                expect(cmd.verify!(
+                    ({ member: {
+                        roles: new Collection<Snowflake, Role>() },
+                        guild: {} as Guild, author: { id: 'y' } as User } as Partial<Message>) as Message
                 )).resolves.toMatchObject({
                     restricted: true
                 });
@@ -221,14 +237,14 @@ describe('Command', () => {
 
             test('user restriction with role id', () => {
 
-                cmd.restricted = { users: ['y'], roles: ['y'] } as any;
+                cmd.restricted = { users: ['y'], roles: ['y'] } as {users: string[], roles: string[]};
                 cmd.ownerOnly = false;
-                cmd.client = {} as any;
-                expect(cmd.verify({
+                cmd.client = {} as SilentClient;
+                expect(cmd.verify!(({
                     member: {
-                        roles: (new Collection<Snowflake, Role>()).set('y', {} as any)
-                    }, guild: true, author: { id: 'y' }
-                } as any)).resolves.toMatchObject({
+                        roles: (new Collection<Snowflake, Role>()).set('y', {} as Role)
+                    }, guild: {} as Guild, author: { id: 'y' } as User
+                } as Partial<Message>) as Message)).resolves.toMatchObject({
                     restricted: true
                 });
 
@@ -241,20 +257,23 @@ describe('Command', () => {
     describe('Ratelimit', () => {
 
         test('not exceeding threshold', async () => {
-            cmd.only = {} as any;
-            cmd.client = {
-                owner: 'y', setTimeout: (fn, delay) => setTimeout(fn, delay)
-            } as any;
+            cmd.only = {} as IOnlyOptions;
+            // @ts-ignore
+            cmd.client = ({
+                owner: 'y', setTimeout: (fn: Function, delay: number) => setTimeout(fn, delay)
+            } as Partial<SilentClient>) as SilentClient;
             cmd.throttled = new Map<Snowflake, { start: number, uses: number, timeout: Timer }>();
             cmd.ratelimit = { all: false, timeout: 5, times: 4 };
 
-            await cmd.verify({
-                author: { id: 'x' }, channel: { id: 'yy' }, reply: content => Promise.resolve(content)
-            } as any);
+            await cmd.verify!(({
+                author: { id: 'x' } as User,
+                channel: ({ id: 'yy',
+                    reply: (content: string) => Promise.resolve(content) } as Partial<TextChannel>) as TextChannel
+            } as Partial<Message>) as Message);
 
-            expect(cmd.verify({
+            expect(cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any)).resolves.toMatchObject({
+            } as Message)).resolves.toMatchObject({
                 channel: false
             });
 
@@ -262,31 +281,36 @@ describe('Command', () => {
 
         test('exceeding threshold and getting a reply', async () => {
 
-            cmd.only = { guild: false, dm: false } as any;
+            cmd.only = { guild: false, dm: false } as IOnlyOptions;
+            // @ts-ignore
             cmd.client = {
                 owner: 'y', setTimeout: (fn, delay) => setTimeout(fn, delay), rateLimitExceededError: true
-            } as any;
+            } as SilentClient;
             cmd.throttled = new Map<Snowflake, { start: number, uses: number, timeout: Timer }>();
             cmd.ratelimit = { all: false, timeout: 5, times: 4 };
 
-            await cmd.verify({
-                author: { id: 'x' }, channel: { id: 'yy' }, reply: content => Promise.resolve(content)
-            } as any);
-            await cmd.verify({
-                author: { id: 'x' }, channel: { id: 'yy' }, reply: content => Promise.resolve(content)
-            } as any);
-            await cmd.verify({
-                author: { id: 'x' }, channel: { id: 'yy' }, reply: content => Promise.resolve(content)
-            } as any);
-            await cmd.verify({
-                author: { id: 'x' }, channel: { id: 'yy' }, reply: content => Promise.resolve(content)
-            } as any);
+            // @ts-ignore
+            await cmd.verify!({
+                author: { id: 'x' }, channel: { id: 'yy' }, reply: (content: string) => Promise.resolve(content)
+            } as Message);
+            // @ts-ignore
+            await cmd.verify!({
+                author: { id: 'x' }, channel: { id: 'yy' }, reply: (content: string) => Promise.resolve(content)
+            } as Message);
+            // @ts-ignore
+            await cmd.verify!({
+                author: { id: 'x' }, channel: { id: 'yy' }, reply: (content: string) => Promise.resolve(content)
+            } as Message);
+            // @ts-ignore
+            await cmd.verify!({
+                author: { id: 'x' }, channel: { id: 'yy' }, reply: (content: string) => Promise.resolve(content)
+            } as Message);
 
             const reply = jest.fn(x => x);
 
-            expect(cmd.verify({
-                reply, author: { id: 'x' }, channel: { id: 'yy' }
-            } as any)).resolves.toMatchObject({
+            expect(cmd.verify!(({
+                reply, author: { id: 'x' } as User, channel: ({ id: 'yy' } as Partial<TextChannel>) as TextChannel
+            } as Partial<Message>) as Message)).resolves.toMatchObject({
                 throttle: true
             });
             // 51 chars > "This command is throttled for another x.xx seconds."
@@ -296,31 +320,34 @@ describe('Command', () => {
 
         test('exceeding threshold and not getting a reply', async () => {
 
-            cmd.only = { guild: false, dm: false } as any;
+            cmd.only = { guild: false, dm: false } as IOnlyOptions;
+            // @ts-ignore
             cmd.client = {
-                owner: 'y', setTimeout: (fn, delay) => setTimeout(fn, delay), rateLimitExceededError: false
-            } as any;
+                owner: 'y',
+                setTimeout: (fn: Function, delay: number) => setTimeout(fn, delay), rateLimitExceededError: false
+            } as SilentClient;
             cmd.throttled = new Map<Snowflake, { start: number, uses: number, timeout: Timer }>();
             cmd.ratelimit = { all: false, timeout: 5, times: 4 };
 
-            await cmd.verify({
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
+            } as Message);
 
             const reply = jest.fn(x => x);
 
-            expect(cmd.verify({
+            // @ts-ignore
+            expect(cmd.verify!({
                 reply, author: { id: 'x' }, channel: { id: 'yy' }
-            } as any)).resolves.toMatchObject({
+            } as Message)).resolves.toMatchObject({
                 throttle: true
             });
 
@@ -328,38 +355,41 @@ describe('Command', () => {
 
         test('exceeding threshold and not getting a reply and reset after timeout', async (done) => {
 
-            cmd.only = { guild: false, dm: false } as any;
+            cmd.only = { guild: false, dm: false } as IOnlyOptions;
+            // @ts-ignore
             cmd.client = {
-                owner: 'y', setTimeout: (fn, delay) => setTimeout(fn, delay), rateLimitExceededError: false
-            } as any;
+                owner: 'y',
+                setTimeout: (fn: Function, delay: number) => setTimeout(fn, delay), rateLimitExceededError: false
+            } as SilentClient;
             cmd.throttled = new Map<Snowflake, { start: number, uses: number, timeout: Timer }>();
             cmd.ratelimit = { all: false, timeout: 5, times: 4 };
 
-            await cmd.verify({
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
-            await cmd.verify({
+            } as Message);
+            await cmd.verify!({
                 author: { id: 'x' }, channel: { id: 'yy' }
-            } as any);
+            } as Message);
 
             const reply = jest.fn(x => x);
 
-            expect(cmd.verify({
+            // @ts-ignore
+            expect(cmd.verify!({
                 reply, author: { id: 'x' }, channel: { id: 'yy' }
-            } as any)).resolves.toMatchObject({
+            } as Message)).resolves.toMatchObject({
                 throttle: true
             });
 
             setTimeout(() => {
-                expect(cmd.verify({
+                expect(cmd.verify!({
                     author: { id: 'x' }, channel: { id: 'yy' }
-                } as any)).resolves.toMatchObject({
+                } as Message)).resolves.toMatchObject({
                     channel: false
                 });
                 done();
@@ -370,8 +400,8 @@ describe('Command', () => {
     });
 
     test('user permissions', () => {
-        cmd.client = { owner: 'y' } as any;
-        cmd.userPermissions = ['ADMINISTRATOR'] as any;
+        cmd.client = { owner: 'y' } as SilentClient;
+        cmd.userPermissions = ['ADMINISTRATOR'] as PermissionFlags[];
         const mockMessage = {
             guild: true,
             member: {
@@ -379,7 +409,8 @@ describe('Command', () => {
             }
         };
 
-        expect(cmd.verify(mockMessage as any)).resolves.toMatchObject({
+        // @ts-ignore
+        expect(cmd.verify!(mockMessage as Message)).resolves.toMatchObject({
             permission: true
         });
         expect(mockMessage.member.hasPermissions.mock.calls[0][0]).toMatchObject(['ADMINISTRATOR']);
@@ -387,18 +418,20 @@ describe('Command', () => {
     });
 
     test('nsfw channel', () => {
-        cmd.client = { owner: 'y' } as any;
+        cmd.client = { owner: 'y' } as SilentClient;
         cmd.nsfw = true;
-        expect(cmd.verify({ channel: { nsfw: false }, guild: true } as any)).resolves.toMatchObject({
+        // @ts-ignore
+        expect(cmd.verify!({ channel: { nsfw: false }, guild: true } as Message)).resolves.toMatchObject({
             nsfw: true
         });
     });
 
     test('guild restricted', () => {
 
-        cmd.client = { owner: 'y' } as any;
-        cmd.only = { guild: true } as any;
-        expect(cmd.verify({ guild: false, channel: {} } as any)).resolves.toMatchObject({
+        cmd.client = { owner: 'y' } as SilentClient;
+        cmd.only = { guild: true } as IOnlyOptions;
+        // @ts-ignore
+        expect(cmd.verify!({ guild: false, channel: {} } as Message)).resolves.toMatchObject({
             guild: true
         });
 
@@ -406,9 +439,10 @@ describe('Command', () => {
 
     test('dm restricted', () => {
 
-        cmd.client = { owner: 'y' } as any;
-        cmd.only = { dm: true } as any;
-        expect(cmd.verify({ guild: true, channel: {} } as any)).resolves.toMatchObject({
+        cmd.client = { owner: 'y' } as SilentClient;
+        cmd.only = { dm: true } as IOnlyOptions;
+        // @ts-ignore
+        expect(cmd.verify!({ guild: true, channel: {} } as Message)).resolves.toMatchObject({
             dm: true
         });
 
@@ -417,7 +451,7 @@ describe('Command', () => {
     describe('min role', () => {
 
         test('role too low', () => {
-            cmd.client = { owner: 'y' } as any;
+            cmd.client = { owner: 'y' } as SilentClient;
             cmd.minRole = 'bar';
             const msg = {
                 channel: {},
@@ -426,16 +460,18 @@ describe('Command', () => {
                 },
                 member: {
                     highestRole: {
-                        comparePositionTo: jest.fn(role => -1)
+                        comparePositionTo: jest.fn(() => -1)
                     }
                 }
             };
-            expect(cmd.verify(msg as any)).resolves.toMatchObject({
+            // @ts-ignore
+            expect(cmd.verify!(msg as Message)).resolves.toMatchObject({
                 role: true
             });
 
             cmd.minRole = 'foobar';
-            expect(cmd.verify(msg as any)).resolves.toMatchObject({
+            // @ts-ignore
+            expect(cmd.verify!(msg as Message)).resolves.toMatchObject({
                 role: true
             });
             expect(msg.member.highestRole.comparePositionTo.mock.calls[0][0]).toMatchObject({
@@ -445,9 +481,9 @@ describe('Command', () => {
         });
 
         test('role high enough', () => {
-            cmd.client = { owner: 'y' } as any;
+            cmd.client = { owner: 'y' } as SilentClient;
             cmd.minRole = 'bar';
-            cmd.only = {} as any;
+            cmd.only = {} as IOnlyOptions;
             const msg = {
                 channel: {},
                 guild: {
@@ -455,16 +491,18 @@ describe('Command', () => {
                 },
                 member: {
                     highestRole: {
-                        comparePositionTo: jest.fn(role => 1)
+                        comparePositionTo: jest.fn(() => 1)
                     }
                 }
             };
-            expect(cmd.verify(msg as any)).resolves.toMatchObject({
+            // @ts-ignore
+            expect(cmd.verify!(msg as Message)).resolves.toMatchObject({
                 channel: false
             });
 
             cmd.minRole = 'foobar';
-            expect(cmd.verify(msg as any)).resolves.toMatchObject({
+            // @ts-ignore
+            expect(cmd.verify!(msg as Message)).resolves.toMatchObject({
                 channel: false
             });
             expect(msg.member.highestRole.comparePositionTo.mock.calls[0][0]).toMatchObject({
@@ -476,12 +514,14 @@ describe('Command', () => {
 
     test('specific channel restricted', async () => {
 
-        cmd.client = { owner: 'y' } as any;
+        cmd.client = { owner: 'y' } as SilentClient;
         cmd.only = { dm: false, guild: false, x: true };
-        expect(cmd.verify({ guild: true, channel: { id: 'x' } } as any)).resolves.toMatchObject({
+        // @ts-ignore
+        expect(cmd.verify!({ guild: true, channel: { id: 'x' } } as Message)).resolves.toMatchObject({
             channel: false
         });
-        expect(cmd.verify({ guild: true, channel: { id: 'y' } } as any)).resolves.toMatchObject({
+        // @ts-ignore
+        expect(cmd.verify!({ guild: true, channel: { id: 'y' } } as Message)).resolves.toMatchObject({
             channel: true
         });
 

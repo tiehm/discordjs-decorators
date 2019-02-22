@@ -76,18 +76,18 @@ export class SilentClient extends Client {
      * @property {String|'mention'} defaultPrefixForce
      * @public
      */
-    public defaultPrefixForce: string|'mention';
+    public defaultPrefixForce!: string|'mention';
     // Internal
     /**
      * @property {CommandRegistry} commands
      * @public
      */
-    public commands: CommandRegistry;
+    public commands!: CommandRegistry;
     /**
      * @property {EventRegistry} events
      * @public
      */
-    public events: EventRegistry;
+    public events!: EventRegistry;
 
     /**
      * This is named _token as token is already used by discord.js itself
@@ -97,7 +97,7 @@ export class SilentClient extends Client {
      */
     private readonly _token: string;
     @logger()
-    private readonly _logger: Logger;
+    private readonly _logger!: Logger;
 
     constructor(silent: ISilentConfig, config?: ClientOptions) {
         super(config);
@@ -158,8 +158,7 @@ export class SilentClient extends Client {
         if (this.defaultPrefixForce) return this.defaultPrefixForce;
         if (Array.isArray(this.prefix)) return this.prefix[0];
         if (!this.prefix && this.mentionPrefix) return `<@${this.user.id}>`;
-        if (this.prefix) return this.prefix;
-        return null;
+        return this.prefix;
     }
 
     /**
