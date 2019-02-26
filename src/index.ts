@@ -2,8 +2,6 @@
  * Copyright (c) 2019., Charlie Tiehm - admin@tiehm.me
  */
 
-// TODO:
-
 export {
     Alias,
     Description,

@@ -135,6 +135,7 @@ export class SilentClient extends Client {
 
         const listener: Listener = new Listener(this, true);
         this.on('message', listener.handleMessageEvent.bind(listener));
+
     }
 
     /**
