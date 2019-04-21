@@ -54,7 +54,8 @@ export class Logger {
             Logger.write(msg);
         } else {
             const [name, ...stack] = err.stack!.split('\n');
-            const msg = `${this.format() + chalk.red(name)}\n${chalk.gray(stack.join('\n'))}`;
+            // tslint:disable-next-line:prefer-template
+            const msg = this.format() + `${chalk.red(name)}\n${chalk.gray(stack.join('\n'))}`;
             Logger.write(msg);
         }
     }
