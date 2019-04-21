@@ -125,8 +125,8 @@ export class SilentClient extends Client {
         if (process.env.PRODUCTION) {
             this.commands = new CommandRegistry(this);
             const commandLoader = new CommandLoader(this);
-            commandLoader.loadFromPath(this.commandDir, false);
             if (this.baseDir) commandLoader.loadFromPath(null, true);
+            commandLoader.loadFromPath(this.commandDir, false);
 
             this.events = new EventRegistry(this);
             const eventLoader = new EventLoader(this);
