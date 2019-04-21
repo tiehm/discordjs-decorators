@@ -98,9 +98,9 @@ export class HelpCommand extends Command {
             const embed: RichEmbed = new RichEmbed()
                 .setTitle(`Help - ${command.commandName}`)
                 .setTimestamp()
-                .addField('Alias', command.alias.length === 0 ? 'None' : command.alias.join(', '), true)
+                .addField('Alias', command.alias.length === 0 ? 'None' : command.alias.join(', '))
                 .addField('Description', command.desc || 'No description provided.')
-                .addField('Usage', `\`${this.client.defaultPrefix}${command.commandName} ${command.usage}\``, true);
+                .addField('Usage', `\`${this.client.defaultPrefix}${command.commandName} ${command.usage}\``);
 
             await msg.reply(embed);
 
