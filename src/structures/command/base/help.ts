@@ -99,7 +99,7 @@ export class HelpCommand extends Command {
                 .setTitle(`Help - ${command.commandName}`)
                 .setTimestamp()
                 .addField('Alias', command.alias.length === 0 ? 'None' : command.alias.join(', '), true)
-                .addField('Description', command.desc || 'No description provided.', true)
+                .addField('Description', command.desc || 'No description provided.')
                 .addField('Usage', `\`${this.client.defaultPrefix}${command.commandName} ${command.usage}\``, true);
 
             await msg.reply(embed);
