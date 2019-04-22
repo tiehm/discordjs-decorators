@@ -122,7 +122,7 @@ export class SilentClient extends Client {
 
         this.checkConfig();
 
-        if (process.env.PRODUCTION) {
+        if (!process.env.DEVELOPMENT) {
             this.commands = new CommandRegistry(this);
             const commandLoader = new CommandLoader(this);
             if (this.baseDir) commandLoader.loadFromPath(null, true);

@@ -12,7 +12,7 @@ import { IVerify } from '../typings/IVerify';
 @Description('Shows all commands (available to you) or information about one command.')
 @Only('guild')
 @Usage('[command]')
-export class HelpCommand extends Command {
+export class DefaultHelpCommand extends Command {
 
     private shouldShowCommand = (cmd: Command, msg: Message) => {
         if (cmd.ownerOnly && this.client.owner !== msg.author.id) return false;

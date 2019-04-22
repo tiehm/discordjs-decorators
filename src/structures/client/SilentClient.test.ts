@@ -6,6 +6,7 @@ import { SilentClient } from './SilentClient';
 
 describe('SilentClient', () => {
 
+    process.env.DEVELOPMENT = 'true';
     let client: SilentClient;
 
     beforeEach(() => {

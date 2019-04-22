@@ -66,30 +66,9 @@ export class Listener {
 
         this.logger.debug(`Message is a command, command found: ${command.commandName}`);
 
-        let verify: IVerify = command.verify(msg, this.client) as IVerify;
+        const verify: IVerify = command.verify(msg, this.client) as IVerify;
         // @ts-ignore
-        if (verify.constructor && verify.constructor.name === 'Promise') verify = await verify;
-
-        if (verify) {
-
-            if (verify.channel) {
-                await msg.reply('This command can not be used in this channel.');
-            }
-            // tslint:disable
-            else if (verify.dm) await msg.reply('This command can only be used within DMs.');
-            else if (verify.guild) await msg.reply('This command can only be used within guilds.');
-            else if (verify.nsfw) await msg.reply('This command can only be used in NSFW channels.');
-            else if (verify.owner) await msg.reply('This command can only be used by the Bot Owner.');
-            else if (verify.permission) {
-                await msg.reply('You do not have enough permissions to use this command.');
-            } else if (verify.restricted) await msg.reply('You can not use this command.');
-            else if (verify.role) await msg.reply('Your role is too low to use this command.');
-            else if (verify.syntax) {
-                // tslint:disable-next-line
-                await msg.reply(`You used this command in the wrong way.\nSyntax: \`${this.client.defaultPrefix}${command.commandName} ${command.usage}\`.`);
-            }
-            if (Object.values(verify).includes(true)) return false;
-        }
+        if (!(await this._verifyCheck(verify, msg, command))) return false;
 
         const args = msg.content.trim().split(/ +/g).slice(1);
 
@@ -100,10 +79,12 @@ export class Listener {
         try {
             if (properties.length === 0) {
                 this.logger.debug('Running command with default arguments');
-                await command.run(msg, args);
+                const cmdVerify = await command.run(msg, args);
+                await this._verifyCheck(cmdVerify, msg, command);
             } else {
                 this.logger.debug('Running command with decorator arguments');
-                await command.run.apply(command, properties);
+                const cmdVerify = await command.run.apply(command, properties);
+                await this._verifyCheck(cmdVerify, msg, command);
             }
         } catch (e) {
             this.logger.error(`Error on command execution: ${command.commandName}`);
@@ -160,6 +141,33 @@ export class Listener {
         // @ts-ignore
         return command;
 
+    }
+
+    private async _verifyCheck(verify: IVerify, msg: Message, command: Command): Promise<boolean> {
+        // tslint:disable-next-line:no-parameter-reassignment
+        if (verify.constructor && verify.constructor.name === 'Promise') verify = await verify;
+
+        if (verify) {
+
+            if (verify.channel) {
+                await msg.reply('This command can not be used in this channel.').catch(this.logger.error);
+            }
+            // tslint:disable
+            else if (verify.dm) await msg.reply('This command can only be used within DMs.').catch(this.logger.error);
+            else if (verify.guild) await msg.reply('This command can only be used within guilds.').catch(this.logger.error);
+            else if (verify.nsfw) await msg.reply('This command can only be used in NSFW channels.').catch(this.logger.error);
+            else if (verify.owner) await msg.reply('This command can only be used by the Bot Owner.').catch(this.logger.error);
+            else if (verify.permission) {
+                await msg.reply('You do not have enough permissions to use this command.').catch(this.logger.error);
+            } else if (verify.restricted) await msg.reply('You can not use this command.').catch(this.logger.error);
+            else if (verify.role) await msg.reply('Your role is too low to use this command.').catch(this.logger.error);
+            else if (verify.syntax) {
+                // tslint:disable-next-line
+                await msg.reply(`You used this command in the wrong way.\nSyntax: \`${this.client.defaultPrefix}${command.commandName} ${command.usage}\`.`).catch(this.logger.error);
+            }
+            if (Object.values(verify).includes(true)) return false;
+        }
+        return true;
     }
 
 }

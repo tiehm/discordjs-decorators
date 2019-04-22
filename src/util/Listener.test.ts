@@ -10,6 +10,8 @@ import { Listener } from './Listener';
 
 describe('Listener', () => {
 
+    process.env.DEVELOPMENT = 'true';
+
     let listener: Listener;
 
     describe('handle message event', () => {

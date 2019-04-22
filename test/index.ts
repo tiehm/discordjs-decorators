@@ -14,6 +14,7 @@ const bot: SilentClient = new SilentClient({
     eventDir: 'events/',
     baseDir: 'test/',
     baseCommands: true,
+    defaultHelpCommand: false,
     prefix: ['-', 's!', '?!'],
     mentionPrefix: true,
     logLevel: 'DEBUG'

@@ -29,7 +29,7 @@ export class CommandLoader {
                                                   `${this.client.baseDir || ''}${pathPattern}`);
         const files = glob.sync(`${resolvedPath}/**/*.js`);
         this.logger.debug(`Found ${files.length} commands to load`);
-        let loadedCommands: Command[] = [];
+        const loadedCommands: Command[] = [];
 
         for (const file of files) {
             this.logger.debug(`Loading ${file}`);
@@ -43,6 +43,7 @@ export class CommandLoader {
                     this.logger.warn(`File ${file} is in the commands directory but is not exporting a command`);
                     continue;
                 }
+                if (foundClass.name === 'DefaultHelpCommand' && !this.client.defaultHelpCommand) continue;
                 const foundInstance: Command = new foundClass();
                 // Defining the class name within the command class
                 // This is used for the method decorators as they have no access
@@ -61,9 +62,6 @@ export class CommandLoader {
         }
 
         if (loadedCommands.length === 0) this.logger.error(new Error('Could not load any commands'));
-        if (!this.client.defaultHelpCommand) {
-            loadedCommands = loadedCommands.filter(value => value.commandName !== 'help');
-        }
         for (const command of loadedCommands) {
             this.logger.debug(`Registering command ${command.commandName}`);
             this.client.commands.registerInternalCommand(command);
