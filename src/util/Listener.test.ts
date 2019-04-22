@@ -56,7 +56,7 @@ describe('Listener', () => {
 
             const msg: Partial<Message> = {
                 content: 'foobar',
-                reply: jest.fn()
+                reply: jest.fn(() => Promise.resolve())
             };
             const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -83,7 +83,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
 
                 const handled = await listener.handleMessageEvent(msg as Message);
@@ -108,7 +108,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -132,7 +132,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -156,7 +156,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -180,7 +180,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -204,7 +204,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -228,7 +228,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -252,7 +252,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
                 const handled = await listener.handleMessageEvent(msg as Message);
 
@@ -279,7 +279,7 @@ describe('Listener', () => {
                     } as Partial<Command<SilentClient>>) as Command<SilentClient>;
                 };
                 const msg: Partial<Message> = {
-                    reply: jest.fn()
+                    reply: jest.fn(() => Promise.resolve())
                 };
 
                 const handled = await listener.handleMessageEvent(msg as Message);
