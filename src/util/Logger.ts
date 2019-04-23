@@ -3,6 +3,7 @@
  */
 
 import chalk from 'chalk';
+import { DiscordAPIError } from 'discord.js';
 import * as moment from 'moment';
 
 const loggers: Map<string, Logger> = new Map<string, Logger>();
@@ -22,6 +23,14 @@ export class Logger {
     }
 
     /**
+     * Format a message to include the log name and the current time
+     * @returns {String}
+     */
+    private static format(name: string): string {
+        return chalk.gray(`[${moment().format('HH:mm:ss')}] [${name}] `);
+    }
+
+    /**
      * The name displayed when logging
      * @property {String} name
      */
@@ -33,7 +42,6 @@ export class Logger {
      */
     constructor(name: string) {
         this.name = name.toUpperCase();
-        return this;
     }
 
     /**
@@ -48,14 +56,24 @@ export class Logger {
      * Logs the error
      * @param err {String|Error} The message or error to log
      */
-    public error(err: string|Error) {
+    public error(err: string|Error|DiscordAPIError) {
         if (typeof err === 'string') {
-            const msg = this.format() + chalk.red(err);
+            const msg = Logger.format(this.name) + chalk.red(err);
             Logger.write(msg);
-        } else {
+        } else if (err.name !== 'DiscordAPIError') {
             const [name, ...stack] = err.stack!.split('\n');
             // tslint:disable-next-line:prefer-template
-            const msg = this.format() + `${chalk.red(name)}\n${chalk.gray(stack.join('\n'))}`;
+            const msg = Logger.format(this.name) + `${chalk.red(name)}\n${chalk.gray(stack.join('\n'))}`;
+            Logger.write(msg);
+        } else {
+            const { name, message, stack, code, method, path } = err as DiscordAPIError;
+            // tslint:disable-next-line:prefer-template
+            const msg = Logger.format(this.name) +
+`${chalk.red(name)}: ${chalk.redBright(message + ' [Code ' + code + ']')}
+${chalk.gray(stack!.split('\n').slice(1).join('\n'))}
+${chalk.white('Path: ' + path)}
+${chalk.white('Method: ' + method)}
+`;
             Logger.write(msg);
         }
     }
@@ -66,7 +84,7 @@ export class Logger {
      */
     public warn(text: string) {
         if (process.env.LOGLEVEL !== 'ERROR') {
-            const msg = this.format() + chalk.yellow(text);
+            const msg = Logger.format(this.name) + chalk.yellow(text);
             Logger.write(msg);
         }
     }
@@ -77,7 +95,7 @@ export class Logger {
      */
     public log(text: string) {
         if (process.env.LOGLEVEL === 'DEBUG' || process.env.LOGLEVEL === 'ALL') {
-            const msg = this.format() + text;
+            const msg = Logger.format(this.name) + text;
             Logger.write(msg);
         }
     }
@@ -88,17 +106,9 @@ export class Logger {
      */
     public debug(text: string) {
         if (process.env.LOGLEVEL === 'DEBUG') {
-            const msg = this.format() + chalk.magenta(text);
+            const msg = Logger.format(this.name) + chalk.magenta(text);
             Logger.write(msg);
         }
-    }
-
-    /**
-     * Format a message to include the log name and the current time
-     * @returns {String}
-     */
-    private format(): string {
-        return chalk.gray(`[${moment().format('HH:mm:ss')}] [${this.name}] `);
     }
 
 }
@@ -110,6 +120,7 @@ export function logger(type?: string): PropertyDecorator {
         // tslint:disable-next-line
         type = type.toUpperCase();
         const log = loggers.get(type) || new Logger(type);
+        if (!loggers.get(type)) loggers.set(type, log);
         Object.defineProperty(target, propertyKey, {
             value: log
         });

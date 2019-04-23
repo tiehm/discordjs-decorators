@@ -145,25 +145,25 @@ export class Listener {
 
     private async _verifyCheck(verify: IVerify, msg: Message, command: Command): Promise<boolean> {
         // tslint:disable-next-line:no-parameter-reassignment
-        if (verify.constructor && verify.constructor.name === 'Promise') verify = await verify;
+        if (verify && verify.constructor && verify.constructor.name === 'Promise') verify = await verify;
 
         if (verify) {
 
             if (verify.channel) {
-                await msg.reply('This command can not be used in this channel.').catch(this.logger.error);
+                await msg.reply('This command can not be used in this channel.').catch(err => this.logger.error(err));
             }
             // tslint:disable
-            else if (verify.dm) await msg.reply('This command can only be used within DMs.').catch(this.logger.error);
-            else if (verify.guild) await msg.reply('This command can only be used within guilds.').catch(this.logger.error);
-            else if (verify.nsfw) await msg.reply('This command can only be used in NSFW channels.').catch(this.logger.error);
-            else if (verify.owner) await msg.reply('This command can only be used by the Bot Owner.').catch(this.logger.error);
+            else if (verify.dm) await msg.reply('This command can only be used within DMs.').catch(err => this.logger.error(err));
+            else if (verify.guild) await msg.reply('This command can only be used within guilds.').catch(err => this.logger.error(err));
+            else if (verify.nsfw) await msg.reply('This command can only be used in NSFW channels.').catch(err => this.logger.error(err));
+            else if (verify.owner) await msg.reply('This command can only be used by the Bot Owner.').catch(err => this.logger.error(err));
             else if (verify.permission) {
-                await msg.reply('You do not have enough permissions to use this command.').catch(this.logger.error);
-            } else if (verify.restricted) await msg.reply('You can not use this command.').catch(this.logger.error);
-            else if (verify.role) await msg.reply('Your role is too low to use this command.').catch(this.logger.error);
+                await msg.reply('You do not have enough permissions to use this command.').catch(err => this.logger.error(err));
+            } else if (verify.restricted) await msg.reply('You can not use this command.').catch(err => this.logger.error(err));
+            else if (verify.role) await msg.reply('Your role is too low to use this command.').catch(err => this.logger.error(err));
             else if (verify.syntax) {
                 // tslint:disable-next-line
-                await msg.reply(`You used this command in the wrong way.\nSyntax: \`${this.client.defaultPrefix}${command.commandName} ${command.usage}\`.`).catch(this.logger.error);
+                await msg.reply(`You used this command in the wrong way.\nSyntax: \`${this.client.defaultPrefix}${command.commandName} ${command.usage}\`.`).catch(err => this.logger.error(err));
             }
             if (Object.values(verify).includes(true)) return false;
         }
