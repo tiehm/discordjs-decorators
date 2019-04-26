@@ -1,6 +1,5 @@
 import { Message } from 'discord.js';
-import { Command, SilentClient } from '..';
-import { IVerify } from '../structures/command/typings/IVerify';
+import { Command, IVerify, SilentClient } from '..';
 import { argumentStore } from './ArgumentMetadata';
 import { logger, Logger } from './Logger';
 
@@ -57,37 +56,37 @@ export class Listener {
             }
         }
 
-        const command = this._findCommandInMessage(msg);
-        if (!command && this.client.commandNotFoundError) {
+        const { cmd, hasCommandInit } = this._findCommandInMessage(msg);
+        if (!cmd && this.client.commandNotFoundError && hasCommandInit) {
             await msg.reply(this.client.commandNotFoundError);
             return false;
         }
-        if (!command) return false;
+        if (!cmd) return false;
 
-        this.logger.debug(`Message is a command, command found: ${command.commandName}`);
+        this.logger.debug(`Message is a command, command found: ${cmd.commandName}`);
 
-        const verify: IVerify = command.verify(msg, this.client) as IVerify;
+        const verify: IVerify = cmd.verify(msg, this.client) as IVerify;
         // @ts-ignore
         if (!(await this._verifyCheck(verify, msg, command))) return false;
 
         const args = msg.content.trim().split(/ +/g).slice(1);
 
         const properties = argumentStore
-            .filter(value => value.name === command._className.toLowerCase())
+            .filter(value => value.name === cmd._className.toLowerCase())
             .sort((a, b) => a.index - b.index).map(value => value.value(msg));
 
         try {
             if (properties.length === 0) {
                 this.logger.debug('Running command with default arguments');
-                const cmdVerify = await command.run(msg, args);
-                await this._verifyCheck(cmdVerify, msg, command);
+                const cmdVerify = await cmd.run(msg, args);
+                await this._verifyCheck(cmdVerify, msg, cmd);
             } else {
                 this.logger.debug('Running command with decorator arguments');
-                const cmdVerify = await command.run.apply(command, properties);
-                await this._verifyCheck(cmdVerify, msg, command);
+                const cmdVerify = await cmd.run.apply(cmd, properties);
+                await this._verifyCheck(cmdVerify, msg, cmd);
             }
         } catch (e) {
-            this.logger.error(`Error on command execution: ${command.commandName}`);
+            this.logger.error(`Error on command execution: ${cmd.commandName}`);
             this.logger.error(e);
         }
 
@@ -100,9 +99,13 @@ export class Listener {
      * @private
      * @returns {Command}
      */
-    public _findCommandInMessage(msg: Message): Command {
+    public _findCommandInMessage(msg: Message): {
+        cmd?: Command|null;
+        hasCommandInit?: boolean;
+    } {
 
-        let command: Command;
+        let command: Command|null = null;
+        let hasCommandInit: boolean = false;
 
         if (msg.isMemberMentioned(this.client.user) &&
             this.client.mentionPrefix && (
@@ -110,6 +113,7 @@ export class Listener {
                 msg.content.startsWith(`<@!${this.client.user.id}>`)
             )
         ) {
+            hasCommandInit = true;
             const foundMsgCmd = msg.content.split(/ +/g)[1];
             if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd) as Command;
             if (this.client.commands.find(c => c.alias && c.alias.includes(foundMsgCmd))) {
@@ -117,6 +121,7 @@ export class Listener {
             }
         } else if (typeof this.client.prefix === 'string') {
             if (msg.content.startsWith(this.client.prefix)) {
+                hasCommandInit = true;
                 const foundMessageCmd =
                           msg.content.slice(this.client.prefix.length).trim().split(/ +/g)[0].toLowerCase();
                 command = this.client.commands.get(foundMessageCmd) ||
@@ -129,6 +134,7 @@ export class Listener {
 
             for (const prefix of this.client.prefix) {
                 if (!msg.content.startsWith(prefix)) continue;
+                hasCommandInit = true;
                 const foundMsgCmd = msg.content.slice(prefix.length).trim().split(/ +/g)[0].toLowerCase();
                 if (this.client.commands.get(foundMsgCmd)) command = this.client.commands.get(foundMsgCmd) as Command;
                 if (this.client.commands.find(c => c.alias && c.alias.includes(foundMsgCmd))) {
@@ -138,8 +144,10 @@ export class Listener {
 
         }
 
-        // @ts-ignore
-        return command;
+        return {
+            hasCommandInit,
+            cmd: command
+        };
 
     }
 
