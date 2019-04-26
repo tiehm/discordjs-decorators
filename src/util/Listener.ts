@@ -66,8 +66,7 @@ export class Listener {
         this.logger.debug(`Message is a command, command found: ${cmd.commandName}`);
 
         const verify: IVerify = cmd.verify(msg, this.client) as IVerify;
-        // @ts-ignore
-        if (!(await this._verifyCheck(verify, msg, command))) return false;
+        if (!(await this._verifyCheck(verify, msg, cmd))) return false;
 
         const args = msg.content.trim().split(/ +/g).slice(1);
 

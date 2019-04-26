@@ -10,7 +10,7 @@ import { Listener } from './Listener';
 
 describe('Listener', () => {
 
-    process.env.DEVELOPMENT = 'true';
+    process.env.XDEVELOPMENT = 'true';
 
     let listener: Listener;
 
@@ -52,7 +52,7 @@ describe('Listener', () => {
                 commandNotFoundError: 'not found',
                 events: new Collection()
             } as SilentClient);
-            listener._findCommandInMessage = jest.fn(() => false);
+            listener._findCommandInMessage = jest.fn(() => ({ hasCommandInit: true }));
 
             const msg: Partial<Message> = {
                 content: 'foobar',
@@ -73,14 +73,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                channel: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        channel: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -98,14 +100,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                dm: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        dm: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -122,14 +126,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                guild: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        guild: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -146,14 +152,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                nsfw: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        nsfw: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -170,14 +178,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                owner: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        owner: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -194,14 +204,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                permission: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        permission: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -218,14 +230,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                restricted: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        restricted: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -242,14 +256,16 @@ describe('Listener', () => {
                 listener = new Listener({
                     events: new Collection()
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                role: true
-                            });
-                        }
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        role: true
+                                    });
+                                }
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -267,16 +283,18 @@ describe('Listener', () => {
                     events: new Collection(),
                     defaultPrefix: '!'
                 } as SilentClient);
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        verify () {
-                            return Promise.resolve({
-                                syntax: true
-                            });
-                        },
-                        commandName: 'foobar',
-                        usage: '[use it]'
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                verify () {
+                                    return Promise.resolve({
+                                        syntax: true
+                                    });
+                                },
+                                commandName: 'foobar',
+                                usage: '[use it]'
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg: Partial<Message> = {
                     reply: jest.fn(() => Promise.resolve())
@@ -300,14 +318,16 @@ describe('Listener', () => {
                     events: new Collection()
                 } as SilentClient);
                 const run = jest.fn();
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        run,
-                        verify () {
-                            return Promise.resolve({});
-                        },
-                        _className: 'foo'
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                run,
+                                verify () {
+                                    return Promise.resolve({});
+                                },
+                                _className: 'foo'
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg = {
                     content: 'x'
@@ -336,14 +356,16 @@ describe('Listener', () => {
                     events: new Collection()
                 } as SilentClient);
                 const run = jest.fn();
-                listener._findCommandInMessage = (): Command<SilentClient> => {
-                    return ({
-                        run,
-                        verify () {
-                            return Promise.resolve({});
-                        },
-                        _className: 'foo'
-                    } as Partial<Command<SilentClient>>) as Command<SilentClient>;
+                listener._findCommandInMessage = (): {cmd?: Command; hasCommandInit?: boolean} => {
+                    return ({cmd:
+                            ({
+                                run,
+                                verify () {
+                                    return Promise.resolve({});
+                                },
+                                _className: 'foo'
+                            } as Partial<Command<SilentClient>>) as Command<SilentClient>
+                    });
                 };
                 const msg = {
                     content: '!test this command'
@@ -381,7 +403,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Partial<Message>) as Message)).toBe('COMMAND FOUND');
+                } as Partial<Message>) as Message).cmd).toBe('COMMAND FOUND');
             });
 
             test('find the command by alias', () => {
@@ -399,7 +421,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toMatchObject({ alias: 'yeet' });
+                } as Message).cmd).toMatchObject({ alias: 'yeet' });
             });
 
             test('find the command with spaces around', () => {
@@ -417,7 +439,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
             });
 
             test('test a message without the prefix', () => {
@@ -435,7 +457,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBeUndefined();
+                } as Message).cmd).toBeNull();
             });
 
             test('test a message with the wrong prefix', () => {
@@ -453,7 +475,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBeNull();
+                } as Message).cmd).toBeNull();
             });
 
         });
@@ -474,7 +496,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
             });
 
             test('find command with alias', () => {
@@ -491,7 +513,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toMatchObject({ alias: 'yeet' });
+                } as Message).cmd).toMatchObject({ alias: 'yeet' });
             });
 
             test('do not find command', () => {
@@ -508,7 +530,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBeUndefined();
+                } as Message).cmd).toBeNull();
             });
 
             test('no prefix', () => {
@@ -525,7 +547,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBeUndefined();
+                } as Message).cmd).toBeNull();
             });
 
         });
@@ -547,21 +569,21 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
 
                 expect(listener._findCommandInMessage({
                     content: '!!test this command',
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
 
                 expect(listener._findCommandInMessage({
                     content: '-test this command',
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
             });
 
             test('find command with alias', () => {
@@ -580,7 +602,7 @@ describe('Listener', () => {
                     isMemberMentioned: (client: ClientUser) => {
                         return client.id === 'CLIENT';
                     }
-                } as Message)).toBe('COMMAND FOUND');
+                } as Message).cmd).toBe('COMMAND FOUND');
 
             });
 
