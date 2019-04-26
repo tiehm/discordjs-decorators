@@ -29,7 +29,7 @@ expect.extend({
 
 describe('Command', () => {
 
-    process.env.DEVELOPMENT = 'true';
+    process.env.XDEVELOPMENT = 'true';
 
     let cmd: Partial<Command>;
     const base = class CMD extends Command {
