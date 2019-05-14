@@ -4,9 +4,8 @@
  */
 
 import { Message, PermissionResolvable, RichEmbed, Role } from 'discord.js';
-import { Description, Name, Only, Usage } from '../../..';
+import { Description, IVerify, Name, Only, Usage } from '../../..';
 import { Command } from '../Command';
-import { IVerify } from '../typings/IVerify';
 
 @Name('help')
 @Description('Shows all commands (available to you) or information about one command.')
@@ -62,10 +61,10 @@ export class DefaultHelpCommand extends Command {
                     });
 
             const embed: RichEmbed = new RichEmbed()
-            .setTimestamp()
-            .setTitle('Help')
-            .setColor('#79a8ff')
-            .setFooter('Automatically generated.');
+                .setTimestamp()
+                .setTitle('Help')
+                .setColor('#79a8ff')
+                .setFooter('Automatically generated.');
 
             for (const cmd of commands.sort((a, b) => {
                 if (a.name < b.name) return -1;
@@ -98,6 +97,7 @@ export class DefaultHelpCommand extends Command {
                 .setTitle(`Help - ${command.commandName}`)
                 .setTimestamp()
                 .addField('Alias', command.alias.length === 0 ? 'None' : command.alias.join(', '), true)
+                .addField('Category', command.category, true)
                 .addField('Description', command.desc || 'No description provided.', true)
                 .addField('Usage', `\`${this.client.defaultPrefix}${command.commandName} ${command.usage}\``, true);
 

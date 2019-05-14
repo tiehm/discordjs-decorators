@@ -94,6 +94,12 @@ export abstract class Command<S extends SilentClient = SilentClient> {
     public nsfw!: boolean;
 
     /**
+     * The category of a command
+     * @property {string} category
+     */
+    public category!: string;
+
+    /**
      * Setting a minimum role (in hierarchy) for command execution
      * @property {string|Snowflake} minRole
      */
@@ -147,6 +153,7 @@ export abstract class Command<S extends SilentClient = SilentClient> {
             if (options.nsfw) this.nsfw = true;
             if (options.minRole) this.minRole = options.minRole;
             if (options.hidden) this.hidden = true;
+            if (options.category) this.category = options.category;
         }
     }
 

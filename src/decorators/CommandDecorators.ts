@@ -138,6 +138,15 @@ export function MinRole(role: string|Snowflake): ClassDecorator {
 export function Hidden(): ClassDecorator {
     return setMetaData('hidden', true);
 }
+
+/**
+ * Set a category for a command
+ * @param category {string}
+ * @returns {ClassDecorator}
+ */
+export function Category(category: string): ClassDecorator {
+    return setMetaData('category', category);
+}
 /**
  * Private function to set the meta data for each command
  * @param key {string}

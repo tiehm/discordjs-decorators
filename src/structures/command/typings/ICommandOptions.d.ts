@@ -25,4 +25,5 @@ export interface ICommandOptions {
     nsfw: boolean;
     minRole: string|Snowflake;
     hidden: boolean;
+    category: string;
 }
