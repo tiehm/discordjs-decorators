@@ -57,7 +57,9 @@ export class Logger {
      * @param err {String|Error} The message or error to log
      */
     public error(err: string|Error|DiscordAPIError) {
-        if (typeof err === 'string') {
+        if (!err) return;
+        if (typeof err === 'string' || !err.stack) {
+            // @ts-ignore
             const msg = Logger.format(this.name) + chalk.red(err);
             Logger.write(msg);
         } else if (err.name !== 'DiscordAPIError') {
